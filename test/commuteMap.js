@@ -1,5 +1,4 @@
 var assert = require('assert');
-var Maybe = require('./shared/Maybe');
 
 var R = require('..');
 
@@ -18,7 +17,26 @@ describe('commuteMap', function() {
   });
 
   it('works on Algebraic Data Types such as "Maybe"', function() {
-    assert.deepEqual(R.commuteMap(plus10map, Maybe, [Maybe(3), Maybe(4), Maybe(5)]), Maybe([13, 14, 15]));
+    function Identity(x) {
+      if (!(this instanceof Identity)) {
+        return new Identity(x);
+      }
+      this.value = x;
+    }
+    Identity.prototype.ap = function(x) {
+      return Identity(this.value(x.value));
+    };
+    Identity.prototype.map = function(f) {
+      return Identity(f(this.value));
+    };
+    Identity.prototype.toString = function() {
+      return 'Identity(' + R.toString(this.value) + ')';
+    };
+
+    assert.strictEqual(
+      R.toString(R.commuteMap(plus10map, Identity, [Identity(3), Identity(4), Identity(5)])),
+      'Identity([13, 14, 15])'
+    );
   });
 
   it('is curried', function() {
